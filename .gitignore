@@ -103,5 +103,6 @@ venv.bak/
 # mypy
 .mypy_cache/
 
-# superseded
+# superseded & data
 __ss__/
+data/
