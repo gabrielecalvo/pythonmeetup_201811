@@ -1,30 +1,31 @@
-import pandas as pd
-from urllib.request import urlopen
-import xml.etree.ElementTree as ET
-from collections import OrderedDict
-from io import StringIO
+import folium
 
-def download_foodsafety_data_and_convert_to_csv(xml_id='FHRS776en-GB.xml', out_fpath='food_safety.csv'):
-    """
-    Downloads food safety data given the local authority id which can be 
-    found at http://ratings.food.gov.uk/open-data/en-GB 
-    """
-    url = 'http://ratings.food.gov.uk/OpenDataFiles/{}'.format(xml_id)
-    response = urlopen(url)
-    content = StringIO(response.read().decode())
+def create_glasgow_map_from_fsa_data(df)
+    m = folium.Map(
+        location=[55.863823, -4.267681],
+        zoom_start=12,
+        tiles='cartodbpositron'
+    )
 
-    def get_info_from_xml():
-        etree = ET.parse(content)
-        root = etree.getroot()
-        for enstab in root.iter('EstablishmentDetail'):
-            d = OrderedDict()
-            for item in enstab:
-                if item.tag == 'Geocode':
-                    for ll_info in item:
-                        d[ll_info.tag] = float(ll_info.text)
-                else:
-                    d[item.tag] = item.text
-            yield d
+    rating_color={
+        'fhis_awaiting_inspection_en-GB': 'gray',
+        'fhis_improvement_required_en-GB': 'red',
+        'fhis_pass_en-GB': 'yellow',
+        'fhis_pass_and_eat_safe_en-GB': 'green',
+    }
 
-    df = pd.DataFrame(list(get_info_from_xml()))
-    df.to_csv(out_fpath, index=None)
+    for _, row in df.iterrows():   
+        info_txt = "<b>{}</b><br>(<i>{}</i>, {})".format(row.BusinessName.replace("'", "`"), row.RatingValue, row.RatingDate)
+        folium.Circle(
+            radius=3,
+            location=[row.Latitude, row.Longitude],
+            tooltip=info_txt,
+            color='black',
+            weight=0.5,
+            fill_opacity=0.8,
+            fill_color=rating_color[row.RatingKey],
+            fill=True,
+        ).add_to(m)
+
+    m.save('food_safety.html')
+    print("Saved :)")
