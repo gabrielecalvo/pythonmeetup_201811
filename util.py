@@ -1,6 +1,6 @@
 import folium
 
-def create_glasgow_map_from_fsa_data(df)
+def create_glasgow_map_from_fsa_data(df):
     m = folium.Map(
         location=[55.863823, -4.267681],
         zoom_start=12,
